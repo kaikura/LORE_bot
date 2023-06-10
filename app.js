@@ -32,16 +32,6 @@ for (const file of eventFiles) {
 	}
 }
   
-client.on ('ready', async () => {
-	let i = 0;
-	const guild = await client.guilds.fetch(process.env.GUILD_ID);
-	setInterval(() => {
-		guild.members.me.setNickname(`progessChange${i}`);
-		i++;
-	  }, 10 * 1000);
-	
-  });
-  
   
 
 
