@@ -21,6 +21,11 @@ module.exports = {
 			.setLabel('Start story')
 			.setStyle(ButtonStyle.Primary);
 
+		const cazz = new ButtonBuilder()
+		.setCustomId('cazzo')
+		.setLabel('Do not click')
+		.setStyle(ButtonStyle.Primary);
+
 		const cancel = new ButtonBuilder()
 			.setCustomId('cancel')
 			.setLabel('Cancel')
