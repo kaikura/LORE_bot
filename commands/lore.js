@@ -62,9 +62,9 @@ module.exports = {
 
 		
 		
-		const collectorFilter = i => i.user.id === interaction.user.id;
+		//const collectorFilter = i => i.user.id === interaction.user.id;
 		try {
-			const confirmation = await response.awaitMessageComponent({ filter: collectorFilter });
+			const confirmation = await response.awaitMessageComponent();//{ filter: collectorFilter }
 			
 			if (confirmation.customId === 'confirm') {
 				var story = await new Promise ((resolve, reject)=>{
@@ -80,14 +80,26 @@ module.exports = {
 				});
 				
 				console.log(story);
-				await confirmation.update({ content: story, components: [] }); 
+				await confirmation.update({ 
+					content: '', 
+					components: [] 
+				});
+				await interaction.followUp({ 
+					content: story, 
+					embeds: [embed],
+					ephemeral : true 
+				}); 
 				
 			} else if (confirmation.customId === 'cancel') {
-				await confirmation.update({ content: 'Action cancelled', components: [] });
+				await confirmation.update({ 
+					content: 'Action cancelled', 
+					components: [] 
+				});
 			}
 		} catch (e) {
 			console.log(e);
-			await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
+			await interaction.editReply({ 
+				content: 'Confirmation not received within 1 minute, cancelling', components: [] });
 		}
 		
 	},
