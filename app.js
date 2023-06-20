@@ -1,38 +1,94 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Events } = require('discord.js');
+const { EmbedBuilder ,ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 const token = process.env.DISCORD_TOKEN;
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-client.commands = new Collection();
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-for (const file of commandFiles) {
-	const filePath = path.join(commandsPath, file);
-	const command = require(filePath);
-	// Set a new item in the Collection with the key as the command name and the value as the exported module
-	if ('data' in command && 'execute' in command) {
-		client.commands.set(command.data.name, command);
-	} else {
-		console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-	}
+const currentUsers = [];
+
+const client = new Client({ 
+	intents: [
+		GatewayIntentBits.Guilds,
+
+	 ] });
+
+const db = new sqlite3.Database('./lore.db', sqlite3.OPEN_READWRITE, (err) => {
+if (err) {
+	console.error(err.message);
 }
+console.log('Connected to the lore database.');
+});
+const confirm = new ButtonBuilder()
+	.setCustomId('confirm')
+	.setLabel('Start story')
+	.setStyle(ButtonStyle.Primary);
 
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const cazz = new ButtonBuilder()
+	.setCustomId('cazzo')
+	.setLabel('Do not click')
+	.setStyle(ButtonStyle.Primary);
 
-for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
-	const event = require(filePath);
-	if (event.once) {
-		client.once(event.name, (...args) => event.execute(...args));
-	} else {
-		client.on(event.name, (...args) => event.execute(...args));
-	}
+const cancel = new ButtonBuilder()
+	.setCustomId('cancel')
+	.setLabel('Cancel')
+	.setStyle(ButtonStyle.Secondary);
+
+const row = new ActionRowBuilder()
+	.addComponents(cancel, confirm, cazz);
+
+
+const embed = new EmbedBuilder()
+	.setColor(0x0099FF)
+	.setImage('https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75')
+	.addFields(
+		{ name: 'Chapter I', value: '\u200B' },
+		{ name: '\u200B', value: 'This is the beginning' },
+		{ name: '\u200B', value: '\u200B' },
+	)
+	.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
+
+
+
+client.once('ready', (c) =>{
+
+	console.log(`✅ ${c.user.tag} is online`);
+})
+
+client.on('interactionCreate', (interaction) => {
+
+	if (interaction.isChatInputCommand()) {
+		if (interaction.commandName == 'lore'){
+			currentUsers.push(interaction.user);
+			console.log(currentUsers);
+			startinGame(interaction);
+		}
+
+	};
+
+	
+});
+
+async function startinGame(interaction){
+
+	const response = await interaction.reply({
+		//content: ``,
+		embeds : [embed],
+		components: [row],
+		ephemeral: true,
+	});
+
+	const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: 3_600_000 });
+	collector.on('collect', async i => {
+		if (i.customId.indexOf('X') > -1)
+		{
+  			alert("hello found inside your_string");
+		}
+		await i.reply(`${i.user} has selected a butt!`);
+		
+	});
+
 }
-  
-  
-
 
 client.login(token);
