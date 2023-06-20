@@ -60,7 +60,7 @@ client.on('interactionCreate', (interaction) => {
 
 	if (interaction.isChatInputCommand()) {
 		if (interaction.commandName == 'lore'){
-			currentUsers.push(interaction.user);
+			currentUsers.push(interaction.user.id);
 			console.log(currentUsers);
 			startinGame(interaction);
 		}
@@ -86,6 +86,12 @@ async function startinGame(interaction){
   			alert("hello found inside your_string");
 		}
 		await i.reply(`${i.user} has selected a butt!`);
+
+
+		const index = currentUsers.indexOf(interaction.user.id);
+		const x = currentUsers.splice(index, 1);
+		console.log(currentUsers);
+
 		
 	});
 
