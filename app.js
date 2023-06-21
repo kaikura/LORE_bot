@@ -68,12 +68,17 @@ async function startinGame(interaction){
 
 	console.log(story);
 	const nn = new ButtonBuilder()
-	.setCustomId('0000X1')
+	.setCustomId('00001')
 	.setLabel('Cancel')
 	.setStyle(ButtonStyle.Primary);
 
+	const nn2 = new ButtonBuilder()
+	.setCustomId('000X1')
+	.setLabel('Cancel?')
+	.setStyle(ButtonStyle.Primary);
+
 	const nrow = new ActionRowBuilder()
-		.addComponents(nn);
+		.addComponents(nn,nn2);
 
 	const response = await interaction.reply({
 		//content: ``,
@@ -94,8 +99,8 @@ async function startinGame(interaction){
 			embed.setDescription = story;
 			await interaction.editReply({
 			//content: ``,
-			embeds : [embed],
-			components: [nrow],
+			embeds : [],
+			components: [],
 			ephemeral: true,
 			});
 			
