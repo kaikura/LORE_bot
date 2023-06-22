@@ -14,11 +14,14 @@ const client = new Client({
 	 ] });
 
 const currentUsers = []; //keeping track of current users
+const currentLevel = new Map();//keeping track of the current level
 
-async function botBusy(interaction){
+async function botBusy(interaction,string){
+
+	if(arguments.length==1) string ='Already playing a game....';
 
 	await interaction.reply({
-		content : 'Already playing!',
+		content : string,
 		ephemeral : true
 	});
 	
@@ -35,19 +38,22 @@ async function startinGame(interaction){
 	currentUsers.push(interaction.user.id);
 	console.log(`${interaction.user.username} has started a game`);
 	console.log(currentUsers);
+	currentLevel.set(`${interaction.user.id}`,{level : 0});
+	console.log(currentLevel);
+
 	const db = new sqlite3.Database('./lore.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
 			console.error(err.message);
 		}
 		console.log('Connected to the lore database.');
-		});
+	});
 
 	const firstMex = await new Promise((resolve, reject) => {
 		db.get(`SELECT story,L1,L2,L3,L1txt,L2txt,L3txt FROM lore where id ='000001' and storyId=1`, (err, result) => {
 			if (err) {
-			console.log('Error running sql: ' + sql)
-			console.log(err)
-			reject(err)
+				console.log('Error running sql: ' + sql)
+				console.log(err)
+				reject(err)
 			} else {
 			/////////////////
 			//INITIAL MESSAGE
@@ -87,13 +93,29 @@ async function startinGame(interaction){
 		});
 	});
 	db.close();
-	await interaction.reply(firstMex);
+	await interaction.reply(`${interaction.user} has started a game`);
+	await interaction.followUp(firstMex);
 
 }//strGame
 
 /////////////////////////////////
 //GAME
 async function game(interaction){
+
+	if(!currentLevel.get(`${interaction.user.id}`)){
+		await interaction.reply({
+			content : 'You already made your choices please start a new game!',
+			ephemeral : true
+		});
+		return;
+	} 
+
+	if(Number(interaction.customId)<=currentLevel.get(`${interaction.user.id}`).level){
+
+		botBusy(interaction,'You already took that step! Please go on...');
+		return;
+	}
+
 
 	const db = new sqlite3.Database('./lore.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
@@ -115,7 +137,8 @@ async function game(interaction){
 				resolve(0);
 
 				}else{
-				//console.log(result.story);
+				currentLevel.set(`${interaction.user.id}`,{level : Math.min(Number(result.L1),Number(result.L2),Number(result.L3))});
+				console.log(currentLevel);
 				const nn = new ButtonBuilder()
 					.setCustomId(`'${result.L1}'`)
 					.setLabel(`${result.L1txt}`)
@@ -143,6 +166,7 @@ async function game(interaction){
 				if(!(result.L1 && result.L2 && result.L3)){
 					const index = currentUsers.indexOf(interaction.user.id);
 					const x = currentUsers.splice(index, 1);
+					currentLevel.delete(`${interaction.user.id}`);
 					const msg = {
 						embeds : [embed],
 						components: [],
@@ -161,9 +185,6 @@ async function game(interaction){
 			}
 		});
 	});
-	
-
-
 
 	db.close();
 	if(follow!=0){
@@ -172,6 +193,7 @@ async function game(interaction){
 	else{
 		const index = currentUsers.indexOf(interaction.user.id);
 		const x = currentUsers.splice(index, 1);
+		currentLevel.set(`${interaction.user.id}`,{level : 0});
 		await interaction.reply({
 			content : 'The story ends here at the moment...',
 			ephemeral: true,
