@@ -17,8 +17,11 @@ const currentUsers = []; //keeping track of current users
 
 async function botBusy(interaction){
 
-	await interaction.reply('Already playing!');
-
+	await interaction.reply({
+		content : 'Already playing!',
+		ephemeral : true
+	});
+	
 }
 
 //GAME STARTS	
@@ -107,13 +110,17 @@ async function game(interaction){
 			console.log(err);
 			resolve(0);
 			} else {
-				if(result!=undefined){
+				if(!result){	
+
+				resolve(0);
+
+				}else{
 				//console.log(result.story);
 				const nn = new ButtonBuilder()
 					.setCustomId(`'${result.L1}'`)
 					.setLabel(`${result.L1txt}`)
 					.setStyle(ButtonStyle.Primary);
-			
+				
 				const nn2 = new ButtonBuilder()
 					.setCustomId(`'${result.L2}'`)
 					.setLabel(`${result.L2txt}`)
@@ -133,47 +140,43 @@ async function game(interaction){
 					.setDescription(`${result.story}`)
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 
+				if(!(result.L1 && result.L2 && result.L3)){
+					const index = currentUsers.indexOf(interaction.user.id);
+					const x = currentUsers.splice(index, 1);
+					const msg = {
+						embeds : [embed],
+						components: [],
+						ephemeral: true,
+						}
+					resolve(msg);
+				}
 				const msg = {
 				embeds : [embed],
 				components: [nrow],
 				ephemeral: true,
 				}
 				resolve(msg);
-			}else{
-				resolve(0);
-			}
-				 
+
+				}	 
 			}
 		});
 	});
 	
 
 
-	if (interaction.customId.indexOf('X') > -1){
-		
-			const index = currentUsers.indexOf(interaction.user.id);
-			const x = currentUsers.splice(index, 1);
-			console.log(currentUsers);
-			console.log("End Game flag found");
-			await interaction.reply({
-				content: `${interaction.user} end of game your game.`,
-				//embeds : [embed],
-				components: [],
-				ephemeral: true,
-			});
-		}
-		else{
-		db.close();
-		if(follow!=0){
-			await interaction.reply(follow);
-		}
-		else{
-			const index = currentUsers.indexOf(interaction.user.id);
-			const x = currentUsers.splice(index, 1);
-			await interaction.reply('Story Interrupted...');
-		}
 
+	db.close();
+	if(follow!=0){
+		await interaction.reply(follow);
+	}
+	else{
+		const index = currentUsers.indexOf(interaction.user.id);
+		const x = currentUsers.splice(index, 1);
+		await interaction.reply({
+			content : 'The story ends here at the moment...',
+			ephemeral: true,
 		
+		});
 	}
 	
 
