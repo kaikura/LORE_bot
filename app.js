@@ -55,7 +55,7 @@ async function startinGame(interaction){
 	});
 
 	const firstMex = await new Promise((resolve, reject) => {
-		db.get(`SELECT story,L1,L2,L3,L1txt,L2txt,L3txt FROM lore where id ='000001' and storyId=${interaction.customId}`, (err, result) => {
+		db.get(`SELECT story,L1,L2,L1txt,L2txt FROM lore where id ='000001' and storyId=${interaction.customId}`, (err, result) => {
 			if (err) {
 				console.log('Error running sql: ' + sql)
 				console.log(err)
@@ -71,8 +71,8 @@ async function startinGame(interaction){
 				.setStyle(ButtonStyle.Primary);
 
 			const sel2 = new ButtonBuilder()
-				.setCustomId(`${result.L3}`)
-				.setLabel(`${result.L3txt}`)
+				.setCustomId(`${result.L2}`)
+				.setLabel(`${result.L2txt}`)
 				.setStyle(ButtonStyle.Primary);
 			/*
 			const sel3 = new ButtonBuilder()
@@ -133,7 +133,7 @@ async function game(interaction){
 
 
 	let follow = await new Promise((resolve, reject) => {
-		db.get(`SELECT story,L1,L2,L3,L1txt,L2txt,L3txt FROM lore where id =${interaction.customId} and storyId=${currentLevel.get(`${interaction.user.id}`).story}`, (err, result) => {
+		db.get(`SELECT story,L1,L2,L1txt,L2txt FROM lore where id =${interaction.customId} and storyId=${currentLevel.get(`${interaction.user.id}`).story}`, (err, result) => {
 			if (err) {
 			console.log('Error running sql: ');
 			console.log(err);
@@ -154,8 +154,8 @@ async function game(interaction){
 					.setStyle(ButtonStyle.Primary);
 				
 				const nn2 = new ButtonBuilder()
-					.setCustomId(`${result.L3}`)
-					.setLabel(`${result.L3txt}`)
+					.setCustomId(`${result.L2}`)
+					.setLabel(`${result.L2txt}`)
 					.setStyle(ButtonStyle.Primary);
 				/*
 				const nn3 = new ButtonBuilder()
