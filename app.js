@@ -43,7 +43,7 @@ async function startinGame(interaction){
 	}
 	//DEBUGSHIT
 	console.log(`${getdate()} - ${interaction.user.username} has started a game`);
-	currentLevel.set(`${interaction.user.id}`,{level : 11, story: interaction.customId});
+	currentLevel.set(`${interaction.user.id}`,{level : 11.1, story: interaction.customId});
 	console.log(currentLevel);
 	////////////
 
