@@ -43,19 +43,19 @@ async function startinGame(interaction){
 	}
 	//DEBUGSHIT
 	console.log(`${getdate()} - ${interaction.user.username} has started a game`);
-	currentLevel.set(`${interaction.user.id}`,{level : 0, story: interaction.customId});
+	currentLevel.set(`${interaction.user.id}`,{level : 11, story: interaction.customId});
 	console.log(currentLevel);
 	////////////
 
-	const db = new sqlite3.Database('./lore.db', sqlite3.OPEN_READWRITE, (err) => {
+	const db = new sqlite3.Database('./lorepath.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
 			console.error(err.message);
 		}
-		console.log('Connected to the lore database.');
+		console.log('Connected to the lorepath database.');
 	});
 
 	const firstMex = await new Promise((resolve, reject) => {
-		db.get(`SELECT story,L1,L2,L1txt,L2txt FROM lore where id ='000001' and storyId=${interaction.customId}`, (err, result) => {
+		db.get(`SELECT story,L1,L2,L1txt,L2txt FROM lore where id ='11' and storyId=${interaction.customId}`, (err, result) => {
 			if (err) {
 				console.log('Error running sql: ' + sql)
 				console.log(err)
@@ -116,7 +116,7 @@ async function game(interaction){
 		return;
 	}
 
-	if(Number(interaction.customId)<Number(currentLevel.get(`${interaction.user.id}`).level)){
+	if(Number(interaction.customId)<Number(currentLevel.get(`${interaction.user.id}`).level) || Number(interaction.customId) > Number(currentLevel.get(`${interaction.user.id}`).level)+0.1){
 
 		botBusy(interaction,'You already took that step! Please move on.');
 		return;
@@ -124,11 +124,11 @@ async function game(interaction){
 	//CONSISTENCY CHECK
 
 
-	const db = new sqlite3.Database('./lore.db', sqlite3.OPEN_READWRITE, (err) => {
+	const db = new sqlite3.Database('./lorepath.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
 			console.error(err.message);
 		}
-		console.log('Connected to the lore database.');
+		console.log('Connected to the lorepath database.');
 		});
 
 
@@ -140,12 +140,12 @@ async function game(interaction){
 			resolve(0);
 			} else {
 				if(!result){	
-
+				console.log("DB result "+result);
 				currentLevel.delete(`${interaction.user.id}`);
 				resolve(0);
 
 				}else{
-				currentLevel.set(`${interaction.user.id}`,{level : Math.min(Number(result.L1),Number(result.L2),Number(result.L3)), story:currentLevel.get(`${interaction.user.id}`).story});
+				currentLevel.set(`${interaction.user.id}`,{level : Math.min(Number(result.L1),Number(result.L2)), story:currentLevel.get(`${interaction.user.id}`).story});
 				console.log(currentLevel);
 				const file = new AttachmentBuilder('imgs/lab2.png');
 				const nn = new ButtonBuilder()
@@ -170,8 +170,31 @@ async function game(interaction){
 					.setColor(0x0099FF)
 					//.setImage('attachment://lab1.png')
 					.setDescription(`${result.story}`)
-
-				if(!(result.L1 && result.L2 && result.L3)){
+				
+				console.log("Next choice1 "+result.L1);
+				console.log("next choice2 "+result.L2);
+				//VICTORY
+				if(Number(result.L1)==0 && Number(result.L2)==0){
+					const file = new AttachmentBuilder('imgs/lab3.png');
+					currentLevel.delete(`${interaction.user.id}`);
+					console.log(currentLevel);
+					const endembed = new EmbedBuilder()
+					.setColor(0x0099FF)
+					.setDescription(`${result.story}`)
+					.addFields(
+						{ name: '\u200B', value: '\u200B' },
+					)
+					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
+					const msg = {
+						files : [file],
+						embeds : [endembed],
+						components: [],
+						ephemeral: true,
+						}
+					resolve(msg);
+				}
+				//GAME OVER
+				if(Number(result.L1)==-1 && Number(result.L2)==-1){
 					const file = new AttachmentBuilder('imgs/lab3.png');
 					currentLevel.delete(`${interaction.user.id}`);
 					console.log(currentLevel);
@@ -238,27 +261,25 @@ async function roleSelection(interaction){
 
 	const b1=new ButtonBuilder()
 			.setCustomId('0')
-			.setLabel('SG Citizen')
+			.setLabel('Polygon Citizen')
 			.setStyle(ButtonStyle.Danger)
 	const b2=new ButtonBuilder()
 			.setCustomId('1')
-			.setLabel('Polygon Citizen')
+			.setLabel('SG Citizen')
 			.setStyle(ButtonStyle.Danger)
 	const b3=new ButtonBuilder()
 			.setCustomId('2')
 			.setLabel('Citizen of the Dead')
 			.setStyle(ButtonStyle.Danger)
 
-	const btn = {b1,b2,b3};
 
 
-
-	if(!interaction.member.roles.cache.find(role => role.name === "Polygon Citizen")){b2.setDisabled(true)};
+	if(!interaction.member.roles.cache.find(role => role.name === "Polygon Citizen")){b1.setDisabled(true)};
 	if(!interaction.member.roles.cache.find(role => role.name === "Citizen of the Dead")){b3.setDisabled(true)};
-	if(!interaction.member.roles.cache.find(role => role.name === "SG Citizen")){b1.setDisabled(true)};
+	if(!interaction.member.roles.cache.find(role => role.name === "SG Citizen")){b2.setDisabled(true)};
 
 	const row = new ActionRowBuilder()
-		.addComponents(b1,b2,b3);
+		.addComponents(b2,b1,b3);
 
 	await interaction.reply(`${interaction.user} has started a game.`);
 	await interaction.followUp({
@@ -308,6 +329,7 @@ client.on('interactionCreate', (interaction) => {
 			startinGame(interaction);
 
 		}else{
+			console.log("INTERACTION ID : "+interaction.customId);
 			game(interaction);
 		}
 
