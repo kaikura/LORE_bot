@@ -6,7 +6,8 @@ const { EmbedBuilder ,ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelect
 const sqlite3 = require('sqlite3').verbose();
 const token = process.env.DISCORD_TOKEN;
 
-
+const waitTime = 86400000;
+//const waitTime = 40;
 const client = new Client({ 
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -47,13 +48,15 @@ async function startinGame(interaction){
 	console.log(currentLevel);
 	////////////
 
+	const access = await userManagment(interaction.user.id);
+
 	const db = new sqlite3.Database('./lorepath.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
 			console.error(err.message);
 		}
 		console.log('Connected to the lorepath database.');
 	});
-
+	
 	const firstMex = await new Promise((resolve, reject) => {
 		db.get(`SELECT story,L1,L2,L1txt,L2txt FROM lore where id ='11' and storyId=${interaction.customId}`, (err, result) => {
 			if (err) {
@@ -91,7 +94,7 @@ async function startinGame(interaction){
 
 
 			const msg = {
-				files : [file],
+				//files : [file],
 				embeds : [embed],
 				components: [row],
 				ephemeral: true,
@@ -102,8 +105,17 @@ async function startinGame(interaction){
 		});
 	});
 	db.close();
-	await interaction.reply(firstMex);
-
+	if(access!=-1){
+		await interaction.reply(firstMex);
+	}else{
+		await interaction.reply({
+			content: `${interaction.user} you have reached the max number of games! Wait tomorrow for some new chances to reach the end of the story`,
+			//embeds : [embed],
+			//components: [row],
+			ephemeral : true,
+		});
+	}
+	
 }//strGame
 
 
@@ -186,7 +198,7 @@ async function game(interaction){
 					)
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 					const msg = {
-						files : [file],
+						//files : [file],
 						embeds : [endembed],
 						components: [],
 						ephemeral: true,
@@ -206,7 +218,7 @@ async function game(interaction){
 					)
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 					const msg = {
-						files : [file],
+						//files : [file],
 						embeds : [endembed],
 						components: [],
 						ephemeral: true,
@@ -214,7 +226,7 @@ async function game(interaction){
 					resolve(msg);
 				}
 				const msg = {
-				files : [file],
+				//files : [file],
 				embeds : [embed],
 				components: [nrow],
 				ephemeral: true,
@@ -245,6 +257,8 @@ async function game(interaction){
 /////////////////
 
 async function roleSelection(interaction){
+
+	const access = await userManagment(interaction.user.id,true);
 
 	if (currentLevel.get(`${interaction.user.id}`)){
 		botBusy(interaction);
@@ -280,14 +294,23 @@ async function roleSelection(interaction){
 
 	const row = new ActionRowBuilder()
 		.addComponents(b2,b1,b3);
+	if(access==-1){
+		await interaction.reply({
+			content: `${interaction.user} Wait tomorrow for some new chances to reach the end of the story`,
+			//embeds : [embed],
+			//components: [row],
+			ephemeral : true,
+		});
+	}else{
+		await interaction.reply(`${interaction.user} has started a game.`);
+		await interaction.followUp({
+			//content: 'Select your path!',
+			//embeds : [embed],
+			components: [row],
+			ephemeral : true,
+		});
+	}
 
-	await interaction.reply(`${interaction.user} has started a game.`);
-	await interaction.followUp({
-		//content: 'Select your path!',
-		//embeds : [embed],
-		components: [row],
-		ephemeral : true,
-	});
 
 }
 
@@ -300,6 +323,124 @@ async function visitor(interaction){
 		ephemeral : true,
 	});
 }
+
+/////////////////
+//USERMANAGMENT
+
+async function userManagment(user){
+	
+
+	const usr = new sqlite3.Database('./users.db', sqlite3.OPEN_READWRITE, (err) => {
+		if (err) {
+			console.error(err.message);
+		}
+		console.log('Connected to the lorepath database.');
+	});
+	const setusr = await new Promise((resolve, reject) => {
+		usr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
+			if (err) {
+			console.log('Error running sql: ');
+			console.log(err);
+			resolve(0);
+			} else {
+				if(!result){	
+				console.log(Date.now());
+				currentLevel.delete(`${interaction.user.id}`);
+				resolve(0);
+				}
+			}
+		});
+	});
+	usr.close();
+
+}
+//////////////////
+async function userManagment(user,update){
+
+	const sr = new sqlite3.Database('./users.db', sqlite3.OPEN_READWRITE, (err) => {
+		if (err) {
+			console.error(err.message);
+		}
+		console.log('Connected to the users database.');
+	});
+
+	const row = await new Promise((resolve, reject) => {
+		sr.get(`select attempt,date,flag from users where id = ${user} `, (err, result) => {
+			if (err) {
+			console.log('Error running sql: ');
+			console.log(err);
+			resolve(0);
+			} else {
+				if(result){
+				console.log(`User : ${user} found`);
+				
+				resolve(result);
+				}else{
+					resolve(0);
+				}
+			}
+		});
+	});
+	console.log(row);
+	if(row==0){
+
+	const insert = await new Promise((resolve, reject) => {
+		sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${1},${Date.now()},${1})`, (err, result) => {
+			if (err) {
+			console.log('Error running sql: ');
+			console.log(err);
+			resolve(0);
+			} else {
+				console.log("User added seccessfully");
+				console.log(row);
+				resolve(1);
+				
+			}
+		});
+	});
+	
+	}else{
+		 if(row.attempt<5){
+		const atpupd = Number(row.attempt)+1;
+		const upd = await new Promise((resolve, reject) => {
+			sr.get(`update users set attempt=${atpupd} where id = ${user}`, (err, result) => {
+				if (err) {
+				console.log('Error running sql: ');
+				console.log(err);
+				resolve(0);
+				} else {	
+					console.log("update success");
+					resolve(1);
+					
+				}
+			});
+		});
+		//console.log(row);
+	
+		}else{ 
+			if(Date.now()>Number(row.date)+waitTime){
+				const atpupdate = Number(row.attempt)+1;
+				const update = await new Promise((resolve, reject) => {
+					sr.get(`update users set attempt=${0} where id = ${user}`, (err, result) => {
+						if (err) {
+						console.log('Error running sql: ');
+						console.log(err);
+						resolve(0);
+						} else {	
+							console.log("update success");
+							resolve(1);
+							
+						}
+					});
+				});
+			}else{
+				return -1;
+			}
+		 }
+		sr.close();
+	}
+}
+	
 
 //EVENTS LISTENER
 /////////////////
