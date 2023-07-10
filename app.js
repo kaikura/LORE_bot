@@ -4,6 +4,7 @@ const path = require('node:path');
 const { Client, GatewayIntentBits, Events } = require('discord.js');
 const { EmbedBuilder ,ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuOptionBuilder ,StringSelectMenuBuilder, AttachmentBuilder} = require('discord.js');
 const sqlite3 = require('sqlite3').verbose();
+const wait = require('node:timers/promises').setTimeout;
 const token = process.env.DISCORD_TOKEN;
 
 const waitTime = 86400000;
@@ -48,7 +49,7 @@ async function startinGame(interaction){
 	console.log(currentLevel);
 	////////////
 
-	const access = await userManagment(interaction.user.id);
+	//const access = await userManagment(interaction.user.id);
 
 	const db = new sqlite3.Database('./lorepath.db', sqlite3.OPEN_READWRITE, (err) => {
 		if (err) {
@@ -94,7 +95,7 @@ async function startinGame(interaction){
 
 
 			const msg = {
-				//files : [file],
+				files : [file],
 				embeds : [embed],
 				components: [row],
 				ephemeral: true,
@@ -105,16 +106,16 @@ async function startinGame(interaction){
 		});
 	});
 	db.close();
-	if(access!=-1){
+	//if(access!=-1){
 		await interaction.reply(firstMex);
-	}else{
-		await interaction.reply({
-			content: `${interaction.user} you have reached the max number of games! Wait tomorrow for some new chances to reach the end of the story`,
+	//}else{
+		//await interaction.reply({
+			//content: `${interaction.user} you have reached the max number of games! Wait tomorrow for some new chances to reach the end of the story`,
 			//embeds : [embed],
 			//components: [row],
-			ephemeral : true,
-		});
-	}
+			//ephemeral : true,
+		//});
+	//}
 	
 }//strGame
 
@@ -169,18 +170,13 @@ async function game(interaction){
 					.setCustomId(`${result.L2}`)
 					.setLabel(`${result.L2txt}`)
 					.setStyle(ButtonStyle.Primary);
-				/*
-				const nn3 = new ButtonBuilder()
-					.setCustomId(`${result.L3}`)
-					.setLabel(`${result.L3txt}`)
-					.setStyle(ButtonStyle.Primary);
-				*/
+
 				const nrow = new ActionRowBuilder()
 					.addComponents(nn,nn2);
 
 				const embed = new EmbedBuilder()
 					.setColor(0x0099FF)
-					//.setImage('attachment://lab1.png')
+					.setImage('attachment://lab1.png')
 					.setDescription(`${result.story}`)
 				
 				console.log("Next choice1 "+result.L1);
@@ -198,7 +194,7 @@ async function game(interaction){
 					)
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 					const msg = {
-						//files : [file],
+						files : [file],
 						embeds : [endembed],
 						components: [],
 						ephemeral: true,
@@ -218,7 +214,7 @@ async function game(interaction){
 					)
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 					const msg = {
-						//files : [file],
+						files : [file],
 						embeds : [endembed],
 						components: [],
 						ephemeral: true,
@@ -226,7 +222,7 @@ async function game(interaction){
 					resolve(msg);
 				}
 				const msg = {
-				//files : [file],
+				files : [file],
 				embeds : [embed],
 				components: [nrow],
 				ephemeral: true,
@@ -302,13 +298,15 @@ async function roleSelection(interaction){
 			ephemeral : true,
 		});
 	}else{
-		await interaction.reply(`${interaction.user} has started a game.`);
-		await interaction.followUp({
+		await interaction.reply({
 			//content: 'Select your path!',
 			//embeds : [embed],
 			components: [row],
 			ephemeral : true,
 		});
+		await interaction.followUp(`${interaction.user} has started a game.`);
+		await wait(40000);
+		await interaction.deleteReply();
 	}
 
 
@@ -385,7 +383,7 @@ async function userManagment(user,update){
 	if(row==0){
 
 	const insert = await new Promise((resolve, reject) => {
-		sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${1},${Date.now()},${1})`, (err, result) => {
+		sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
 			if (err) {
 			console.log('Error running sql: ');
 			console.log(err);
