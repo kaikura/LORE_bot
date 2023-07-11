@@ -1,4 +1,4 @@
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, ApplicationCommandOptionType } = require('discord.js');
 const { REST, Routes } = require('discord.js');
 require('dotenv').config();
 const token = process.env.DISCORD_TOKEN;
@@ -11,6 +11,23 @@ const commands = [
     {
         name : 'lore',
         description : 'Start a new Story',
+
+    },
+	{
+        name : 'rstlevel',
+        description : 'Admin command',
+		options : [
+			{
+				name: 'input',
+				description : "admin command",
+				type : ApplicationCommandOptionType.String,
+				required : true,
+			}
+		]
+    },
+	{
+        name : 'ptdb',
+        description : 'Admin command',
     },
 ];
 

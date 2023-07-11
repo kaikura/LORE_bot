@@ -17,6 +17,18 @@ const client = new Client({
 
 const currentLevel = new Map();//keeping track of the current level
 
+function msToTime(duration) {
+	var milliseconds = Math.floor((duration % 1000) / 100),
+	  seconds = Math.floor((duration / 1000) % 60),
+	  minutes = Math.floor((duration / (1000 * 60)) % 60),
+	  hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+  
+	hours = (hours < 10) ? "0" + hours : hours;
+	minutes = (minutes < 10) ? "0" + minutes : minutes;
+	seconds = (seconds < 10) ? "0" + seconds : seconds;
+  
+	return hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+  }
 async function botBusy(interaction,string){
 
 	if(arguments.length==1) string =`${interaction.user} you are already playing a game....`;
@@ -209,9 +221,7 @@ async function game(interaction){
 					const endembed = new EmbedBuilder()
 					.setColor(0x0099FF)
 					.setDescription(`${result.story}`)
-					.addFields(
-						{ name: '\u200B', value: '\u200B' },
-					)
+					.addFields({ name: '\u200B', value: '\u200B' })
 					.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 					const msg = {
 						files : [file],
@@ -260,15 +270,6 @@ async function roleSelection(interaction){
 		botBusy(interaction);
 		return;
 	}
-
-	const embed = new EmbedBuilder()
-	.setColor(0x0099FF)
-	.setTitle('Choose the Path')
-	//.setURL('https://discord.js.org/')
-
-	.setDescription('XXXXXXXXXXXX')
-	.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
-
 	const b1=new ButtonBuilder()
 			.setCustomId('0')
 			.setLabel('Polygon Citizen')
@@ -290,17 +291,33 @@ async function roleSelection(interaction){
 
 	const row = new ActionRowBuilder()
 		.addComponents(b2,b1,b3);
-	if(access==-1){
+	if(access.data==-1){
+		const emb = new EmbedBuilder()
+		.setColor(0x0099FF)
+		.addFields({ name: ':hourglass: Waiting Time',value: '\u200B'})
+		.addFields({ name: `:clock2: ${msToTime(access.time)}`,value: '\u200B'})
+		.addFields({ name: '\u200B', value: '\u200B' })
+		.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 		await interaction.reply({
-			content: `${interaction.user} Wait tomorrow for some new chances to reach the end of the story`,
-			//embeds : [embed],
+
+			content: `${interaction.user}, you have reached the maximun number of tries for today`,
+			embeds : [emb],
 			//components: [row],
 			ephemeral : true,
 		});
 	}else{
+		const emb = new EmbedBuilder()
+		.setColor(0x0099FF)
+		.setTitle('Welcome to CitizenLore')
+		.setDescription('Prepare to be transported into a realm of boundless possibilities, where the power of choice lies at your fingertips. CitizenLore, the intelligent bot companion, invites you to embark on an extraordinary crossroad story game that will captivate your imagination.')
+		.addFields({ name: '\u200B', value: '\u200B' })
+		.setThumbnail('https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75')
+		.addFields({ name: 'Path Selection', value: 'Choose the story you will stat with' })
+		.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
+
 		await interaction.reply({
 			//content: 'Select your path!',
-			//embeds : [embed],
+			embeds : [emb],
 			components: [row],
 			ephemeral : true,
 		});
@@ -317,41 +334,13 @@ async function roleSelection(interaction){
 async function visitor(interaction){
 
 	await interaction.reply({
-		content : `Dear ${interaction.user.username}, there is no story available for you at the moment`,
+		content : `Dear ${interaction.user}, there is no story available for you at the moment`,
 		ephemeral : true,
 	});
 }
 
 /////////////////
 //USERMANAGMENT
-
-async function userManagment(user){
-	
-
-	const usr = new sqlite3.Database('./users.db', sqlite3.OPEN_READWRITE, (err) => {
-		if (err) {
-			console.error(err.message);
-		}
-		console.log('Connected to the lorepath database.');
-	});
-	const setusr = await new Promise((resolve, reject) => {
-		usr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
-			if (err) {
-			console.log('Error running sql: ');
-			console.log(err);
-			resolve(0);
-			} else {
-				if(!result){	
-				console.log(Date.now());
-				currentLevel.delete(`${interaction.user.id}`);
-				resolve(0);
-				}
-			}
-		});
-	});
-	usr.close();
-
-}
 //////////////////
 async function userManagment(user,update){
 
@@ -365,65 +354,66 @@ async function userManagment(user,update){
 	const row = await new Promise((resolve, reject) => {
 		sr.get(`select attempt,date,flag from users where id = ${user} `, (err, result) => {
 			if (err) {
-			console.log('Error running sql: ');
-			console.log(err);
-			resolve(0);
+				console.log('Error running sql: ');
+				console.log(err);
+				resolve(0);
 			} else {
 				if(result){
-				console.log(`User : ${user} found`);
-				
-				resolve(result);
+					console.log(`User : ${user} found`);
+					
+					resolve(result);
 				}else{
 					resolve(0);
 				}
 			}
 		});
 	});
+	console.log(user);
 	console.log(row);
 	if(row==0){
 
-	const insert = await new Promise((resolve, reject) => {
-		sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
-			if (err) {
-			console.log('Error running sql: ');
-			console.log(err);
-			resolve(0);
-			} else {
-				console.log("User added seccessfully");
-				console.log(row);
-				resolve(1);
-				
-			}
-		});
-	});
-	
-	}else{
-		 if(row.attempt<5){
-		const atpupd = Number(row.attempt)+1;
-		const upd = await new Promise((resolve, reject) => {
-			sr.get(`update users set attempt=${atpupd} where id = ${user}`, (err, result) => {
+		const insert = await new Promise((resolve, reject) => {
+			sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
 				if (err) {
-				console.log('Error running sql: ');
-				console.log(err);
-				resolve(0);
-				} else {	
-					console.log("update success");
+					console.log('Error running sql: ');
+					console.log(err);
+					resolve(0);
+				} else {
+					console.log("User added seccessfully");
+					console.log(row);
 					resolve(1);
 					
 				}
 			});
 		});
-		//console.log(row);
-	
-		}else{ 
-			if(Date.now()>Number(row.date)+waitTime){
-				const atpupdate = Number(row.attempt)+1;
-				const update = await new Promise((resolve, reject) => {
-					sr.get(`update users set attempt=${0} where id = ${user}`, (err, result) => {
-						if (err) {
+		return {data:1}
+	}else{
+		 
+		if(Number(row.attempt)<5){
+			const atpupd = Number(row.attempt)+1;
+			const upd = await new Promise((resolve, reject) => {
+				sr.get(`update users set attempt=${atpupd} where id = ${user}`, (err, result) => {
+					if (err) {
 						console.log('Error running sql: ');
 						console.log(err);
 						resolve(0);
+					} else {	
+						console.log("update success");
+						resolve(1);
+						
+					}
+				});
+		});
+		return{data:1}
+	
+		}else{ 
+			if(Date.now()>Number(row.date)+waitTime){
+				const update = await new Promise((resolve, reject) => {
+					sr.get(`update users set attempt=${0},date=${Date.now()} where id = ${user}`, (err, result) => {
+						if (err) {
+							console.log('Error running sql: ');
+							console.log(err);
+							resolve(0);
 						} else {	
 							console.log("update success");
 							resolve(1);
@@ -432,13 +422,42 @@ async function userManagment(user,update){
 					});
 				});
 			}else{
-				return -1;
+				tt = (row.date+waitTime)-Date.now();
+				console.log(tt);
+				msg = {data:-1,time:tt}
+				return msg;
 			}
 		 }
 		sr.close();
 	}
 }
-	
+
+async function dbAttempt(interaction){
+
+	const sr = new sqlite3.Database('./users.db', sqlite3.OPEN_READWRITE, (err) => {
+		if (err) {
+			console.error(err.message);
+		}
+		console.log('Connected to the users database.');
+	});
+
+	const update = await new Promise((resolve, reject) => {
+		sr.get(`update users set attempt=0 where id=${interaction.user.id}`, (err, result) => {
+			if (err) {
+				console.log('Error running sql: ');
+				console.log(err);
+				resolve(0);
+			} else {	
+				console.log("update success");
+				resolve(1);
+				
+			}
+		});
+	});
+	sr.close();
+	interaction.reply({content:`attempt restored to 0`,ephemeral:true});
+
+}
 
 //EVENTS LISTENER
 /////////////////
@@ -453,12 +472,35 @@ client.on('interactionCreate', (interaction) => {
 	if (interaction.isChatInputCommand()) {
 		if (interaction.commandName == 'lore'){
 			if(interaction.member.roles.cache.find(role => role.name === "Polygon Citizen" || role.name === "SG Citizen" || role.name === "Citizen of the Dead")){
+			//if(interaction.member.roles.cache.find(role => role.name === "loremanager")){
 				
 				roleSelection(interaction);		
 				
 			}else{
 
 				visitor(interaction);
+			}		
+		}
+		if(interaction.commandName == 'rstlevel'){
+			//console.log(interaction);
+			const npt = interaction.options.get("input").value;
+			if(interaction.member.roles.cache.find(role => role.name === "loremanager")){
+				currentLevel.delete(`${npt}`);
+				console.log("RESET CALLED");
+				console.log(currentLevel);
+				interaction.reply({content:`status ${npt} restored`,ephemeral:true});
+			}else{
+				interaction.reply({content:'Permission denied',ephemeral:true});
+			}
+		}
+		if (interaction.commandName == 'ptdb'){
+			if(interaction.member.roles.cache.find(role => role.name === "loremanager")){
+				
+				dbAttempt(interaction);
+				
+			}else{
+
+				interaction.reply({content:'Permission denied',ephemeral:true});
 			}		
 		}
 	}
@@ -480,3 +522,4 @@ client.on('interactionCreate', (interaction) => {
 ///////////////////
 
 client.login(token);
+
