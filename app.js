@@ -27,7 +27,7 @@ function msToTime(duration) {
 	minutes = (minutes < 10) ? "0" + minutes : minutes;
 	seconds = (seconds < 10) ? "0" + seconds : seconds;
   
-	return hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+	return hours + ":" + minutes + ":" + seconds;
   }
 async function botBusy(interaction,string){
 
@@ -80,7 +80,7 @@ async function startinGame(interaction){
 			/////////////////
 			//INITIAL MESSAGE
 			
-			const file = new AttachmentBuilder('imgs/lab1.png');
+			const file = new AttachmentBuilder(`images/${interaction.customId}up/11.png`);
 			const sel1 = new ButtonBuilder()
 				.setCustomId(`${result.L1}`)
 				.setLabel(`${result.L1txt}`)
@@ -172,7 +172,7 @@ async function game(interaction){
 				}else{
 				currentLevel.set(`${interaction.user.id}`,{level : Math.min(Number(result.L1),Number(result.L2)), story:currentLevel.get(`${interaction.user.id}`).story});
 				console.log(currentLevel);
-				const file = new AttachmentBuilder('imgs/lab2.png');
+				const file = new AttachmentBuilder(`images/${currentLevel.get(`${interaction.user.id}`).story}up/${interaction.customId}.png`);
 				const nn = new ButtonBuilder()
 					.setCustomId(`${result.L1}`)
 					.setLabel(`${result.L1txt}`)
@@ -188,14 +188,14 @@ async function game(interaction){
 
 				const embed = new EmbedBuilder()
 					.setColor(0x0099FF)
-					.setImage('attachment://lab1.png')
+					//.setImage('attachment://lab1.png')
 					.setDescription(`${result.story}`)
 				
 				console.log("Next choice1 "+result.L1);
 				console.log("next choice2 "+result.L2);
 				//VICTORY
 				if(Number(result.L1)==0 && Number(result.L2)==0){
-					const file = new AttachmentBuilder('imgs/lab3.png');
+					//const file = new AttachmentBuilder('imgs/lab3.png');
 					currentLevel.delete(`${interaction.user.id}`);
 					console.log(currentLevel);
 					const endembed = new EmbedBuilder()
@@ -215,7 +215,7 @@ async function game(interaction){
 				}
 				//GAME OVER
 				if(Number(result.L1)==-1 && Number(result.L2)==-1){
-					const file = new AttachmentBuilder('imgs/lab3.png');
+					//const file = new AttachmentBuilder('imgs/lab3.png');
 					currentLevel.delete(`${interaction.user.id}`);
 					console.log(currentLevel);
 					const endembed = new EmbedBuilder()
@@ -296,11 +296,11 @@ async function roleSelection(interaction){
 		.setColor(0x0099FF)
 		.addFields({ name: ':hourglass: Waiting Time',value: '\u200B'})
 		.addFields({ name: `:clock2: ${msToTime(access.time)}`,value: '\u200B'})
-		.addFields({ name: '\u200B', value: '\u200B' })
-		.setFooter({ text: 'Powered by PSLab', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
+		//.addFields({ name: '\u200B', value: '\u200B' })
+		.setFooter({ text: 'Powered by PSLabs', iconURL: 'https://lab.ps-lab.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FlabLogoBlack.673a99a0.gif&w=3840&q=75' });
 		await interaction.reply({
 
-			content: `${interaction.user}, you have reached the maximun number of tries for today`,
+			content: `${interaction.user}, you have reached the maximum number tries for today`,
 			embeds : [emb],
 			//components: [row],
 			ephemeral : true,
@@ -373,14 +373,14 @@ async function userManagment(user,update){
 	if(row==0){
 
 		const insert = await new Promise((resolve, reject) => {
-			sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${0},${Date.now()},${1})`, (err, result) => {
+			sr.get(`INSERT INTO users (id,attempt,date,flag) VALUES(${user},${1},${Date.now()},${1})`, (err, result) => {
 				if (err) {
 					console.log('Error running sql: ');
 					console.log(err);
 					resolve(0);
 				} else {
-					console.log("User added seccessfully");
-					console.log(row);
+					console.log(`User ${user} added seccessfully`);
+					//console.log(row);
 					resolve(1);
 					
 				}
@@ -392,7 +392,7 @@ async function userManagment(user,update){
 		if(Number(row.attempt)<5){
 			const atpupd = Number(row.attempt)+1;
 			const upd = await new Promise((resolve, reject) => {
-				sr.get(`update users set attempt=${atpupd} where id = ${user}`, (err, result) => {
+				sr.get(`update users set attempt=${atpupd},date=${Date.now()} where id = ${user}`, (err, result) => {
 					if (err) {
 						console.log('Error running sql: ');
 						console.log(err);
@@ -423,12 +423,13 @@ async function userManagment(user,update){
 				});
 			}else{
 				tt = (row.date+waitTime)-Date.now();
-				console.log(tt);
 				msg = {data:-1,time:tt}
 				return msg;
 			}
-		 }
+		}
 		sr.close();
+		return{data:1}
+		
 	}
 }
 
@@ -440,9 +441,10 @@ async function dbAttempt(interaction){
 		}
 		console.log('Connected to the users database.');
 	});
+	const userdb = interaction.options.get("input").value;
 
 	const update = await new Promise((resolve, reject) => {
-		sr.get(`update users set attempt=0 where id=${interaction.user.id}`, (err, result) => {
+		sr.get(`update users set attempt=0, date =${Date.now()} where id=${userdb}`, (err, result) => {
 			if (err) {
 				console.log('Error running sql: ');
 				console.log(err);

@@ -28,6 +28,14 @@ const commands = [
 	{
         name : 'ptdb',
         description : 'Admin command',
+		options : [
+			{
+				name: 'input',
+				description : "admin command",
+				type : ApplicationCommandOptionType.String,
+				required : true,
+			}
+		]
     },
 ];
 
